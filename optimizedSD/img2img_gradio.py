@@ -280,4 +280,4 @@ demo = gr.Interface(
     ],
     outputs=["image", "text"],
 )
-demo.launch()
+demo.launch(share=True)
