@@ -1,5 +1,6 @@
 import gradio as gr
 import numpy as np
+import cv2
 import torch
 from torchvision.utils import make_grid
 from einops import rearrange
@@ -7,7 +8,6 @@ import os, re
 from PIL import Image
 import torch
 import pandas as pd
-import numpy as np
 from random import randint
 from omegaconf import OmegaConf
 from PIL import Image
@@ -245,12 +245,23 @@ def generate(
 
     restorer = GFPGANer(
         model_path=model_path,
-        upscale=args.upscale,
+        upscale=1,
         arch=arch,
         channel_multiplier=channel_multiplier,
         bg_upsampler=bg_upsampler)
+
+    pil_img = Image.fromarray(grid.astype(np.uint8))
+    input_img=np.asarray(pil_img)
+
+    # restore faces and background if necessary
+    cropped_faces, restored_faces, restored_img = restorer.enhance(
+        input_img,
+        has_aligned=False,
+        only_center_face=False,
+        paste_back=True,
+        weight=0.5)
     
-    return Image.fromarray(grid.astype(np.uint8)), txt
+    return Image.fromarray(restored_img.astype(np.uint8)), txt
 
 
 demo = gr.Interface(
