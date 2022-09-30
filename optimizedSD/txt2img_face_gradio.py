@@ -250,8 +250,7 @@ def generate(
         channel_multiplier=channel_multiplier,
         bg_upsampler=bg_upsampler)
 
-    pil_img = Image.fromarray(grid.astype(np.uint8))
-    input_img=np.asarray(pil_img)
+    input_img=cv2.cvtColor(grid.astype(np.uint8), cv2.COLOR_RGB2BGR) 
 
     # restore faces and background if necessary
     cropped_faces, restored_faces, restored_img = restorer.enhance(
@@ -260,7 +259,8 @@ def generate(
         only_center_face=False,
         paste_back=True,
         weight=0.5)
-    
+
+    restored_img=cv2.cvtColor(restored_img.astype(np.uint8), cv2.COLOR_RGB2BGR) 
     return Image.fromarray(restored_img.astype(np.uint8)), txt
 
 
