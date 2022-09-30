@@ -248,7 +248,7 @@ def generate(
         scale=2,
         model_path='https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth',
         model=model,
-        tile=400
+        tile=400,
         tile_pad=10,
         pre_pad=0,
         half=True)  # need to set False in CPU mode
