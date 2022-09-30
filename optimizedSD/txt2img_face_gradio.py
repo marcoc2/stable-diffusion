@@ -241,7 +241,18 @@ def generate(
         # download pre-trained models from url
         model_path = url
 
-    bg_upsampler = None
+    from basicsr.archs.rrdbnet_arch import RRDBNet
+    from realesrgan import RealESRGANer
+    model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=2)
+    bg_upsampler = RealESRGANer(
+        scale=2,
+        model_path='https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth',
+        model=model,
+        tile=400
+        tile_pad=10,
+        pre_pad=0,
+        half=True)  # need to set False in CPU mode
+
 
     restorer = GFPGANer(
         model_path=model_path,
