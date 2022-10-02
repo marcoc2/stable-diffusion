@@ -96,8 +96,6 @@ def generate(
     seed,
     outdir,
     img_format,
-    turbo,
-    full_precision,
     sampler,
 ):
 
@@ -105,7 +103,7 @@ def generate(
     f = 8
     start_code = None
     model.unet_bs = unet_bs
-    model.turbo = turbo
+    model.turbo = True
     model.cdevice = device
     modelCS.cond_stage_model.device = device
 
@@ -116,7 +114,7 @@ def generate(
     # Logging
     logger(locals(), "logs/txt2img_gradio_logs.csv")
 
-    if device != "cpu" and full_precision == False:
+    if device != "cpu":
         model.half()
         modelFS.half()
         modelCS.half()
@@ -132,7 +130,7 @@ def generate(
     assert prompt is not None
     data = [batch_size * [prompt]]
 
-    if full_precision == False and device != "cpu":
+    if device != "cpu":
         precision_scope = autocast
     else:
         precision_scope = nullcontext
@@ -234,20 +232,20 @@ def generate(
     url = 'https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.3.pth'
 
     # determine model paths
-    model_path = os.path.join('experiments/pretrained_models', model_name + '.pth')
+    model_path = os.path.join('/content/GFPGAN/experiments/pretrained_models', model_name + '.pth')
     if not os.path.isfile(model_path):
-        model_path = os.path.join('gfpgan/weights', model_name + '.pth')
+        model_path = os.path.join('/content/GFPGAN/gfpgan/weights', model_name + '.pth')
     if not os.path.isfile(model_path):
         # download pre-trained models from url
         model_path = url
 
     from basicsr.archs.rrdbnet_arch import RRDBNet
     from realesrgan import RealESRGANer
-    model = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=2)
+    model_upsampler = RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64, num_block=23, num_grow_ch=32, scale=2)
     bg_upsampler = RealESRGANer(
         scale=2,
         model_path='https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth',
-        model=model,
+        model=model_upsampler,
         tile=400,
         tile_pad=10,
         pre_pad=0,
@@ -256,7 +254,7 @@ def generate(
 
     restorer = GFPGANer(
         model_path=model_path,
-        upscale=1,
+        upscale=2,
         arch=arch,
         channel_multiplier=channel_multiplier,
         bg_upsampler=bg_upsampler)
@@ -282,8 +280,8 @@ demo = gr.Interface(
         gr.Slider(1, 1000, value=50),
         gr.Slider(1, 100, step=1),
         gr.Slider(1, 100, step=1),
-        gr.Slider(64, 4096, value=512, step=64),
-        gr.Slider(64, 4096, value=512, step=64),
+        gr.Slider(512, 1024, value=512, step=64),
+        gr.Slider(512, 1024, value=512, step=64),
         gr.Slider(0, 50, value=7.5, step=0.1),
         gr.Slider(0, 1, step=0.01),
         gr.Slider(1, 2, value=1, step=1),
@@ -291,8 +289,6 @@ demo = gr.Interface(
         "text",
         gr.Text(value="outputs/txt2img-samples"),
         gr.Radio(["png", "jpg"], value='png'),
-        "checkbox",
-        "checkbox",
         gr.Radio(["ddim", "plms","heun", "euler", "euler_a", "dpm2", "dpm2_a", "lms"], value="plms"),
     ],
     outputs=["image", "text"],
