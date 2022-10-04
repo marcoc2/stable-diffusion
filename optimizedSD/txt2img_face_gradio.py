@@ -96,6 +96,7 @@ def generate(
     seed,
     outdir,
     img_format,
+    face_enhancer,
     sampler,
 ):
 
@@ -261,16 +262,21 @@ def generate(
 
     input_img=cv2.cvtColor(grid.astype(np.uint8), cv2.COLOR_RGB2BGR) 
 
+    if(face_enhancer):
+        weight=0.5
+    else:
+        weight=0.0
+
     # restore faces and background if necessary
     cropped_faces, restored_faces, restored_img = restorer.enhance(
-        input_img,
+    input_img,
         has_aligned=False,
-        only_center_face=False,
+    only_center_face=False,
         paste_back=True,
         weight=0.5)
 
     restored_img=cv2.cvtColor(restored_img.astype(np.uint8), cv2.COLOR_RGB2BGR) 
-    return Image.fromarray(restored_img.astype(np.uint8)), txt
+    return Image.fromarray(restored_img.astype(np.uint8)), txt, Image.fromarray(grid.astype(np.uint8))
 
 
 demo = gr.Interface(
@@ -283,14 +289,15 @@ demo = gr.Interface(
         gr.Slider(512, 1024, value=512, step=64),
         gr.Slider(512, 1024, value=512, step=64),
         gr.Slider(0, 50, value=7.5, step=0.1),
-        gr.Slider(0, 1, step=0.01),
-        gr.Slider(1, 2, value=1, step=1),
-        gr.Text(value="cuda"),
+        1,#gr.Slider(0, 1, step=0.01),
+        0, #gr.Slider(1, 2, value=1, step=1),
+        "cuda", #gr.Text(value="cuda"),
         "text",
-        gr.Text(value="outputs/txt2img-samples"),
-        gr.Radio(["png", "jpg"], value='png'),
-        gr.Radio(["ddim", "plms","heun", "euler", "euler_a", "dpm2", "dpm2_a", "lms"], value="plms"),
+        "outputs/txt2img-samples", #gr.Text(value="outputs/txt2img-samples"),
+        'png', #gr.Radio(["png", "jpg"], value='png'),
+        "checkbox",
+        gr.Radio(["ddim", "plms","heun", "euler", "euler_a", "dpm2", "dpm2_a", "lms"], value="euler_a"),
     ],
-    outputs=["image", "text"],
+    outputs=["image", "image" ,"text"],
 )
 demo.launch(share=True)
