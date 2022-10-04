@@ -90,15 +90,15 @@ def generate(
     Height,
     Width,
     scale,
-    ddim_eta,
-    unet_bs,
-    device,
     seed,
-    outdir,
-    img_format,
     face_enhancer,
     sampler,
 ):
+    device="cuda"
+    img_format="png"
+    ddim_eta=0
+    unet_bs=1
+    outdir="outputs/txt2img-samples"
 
     C = 4
     f = 8
@@ -122,10 +122,11 @@ def generate(
 
     tic = time.time()
     os.makedirs(outdir, exist_ok=True)
-    outpath = outdir
+    outpath = "outputs/txt2img-samples"
     sample_path = os.path.join(outpath, "_".join(re.split(":| ", prompt)))[:150]
     os.makedirs(sample_path, exist_ok=True)
     base_count = len(os.listdir(sample_path))
+    global_count = len(os.listdir(outpath))
     
     # n_rows = opt.n_rows if opt.n_rows > 0 else batch_size
     assert prompt is not None
@@ -269,32 +270,29 @@ def generate(
 
     # restore faces and background if necessary
     cropped_faces, restored_faces, restored_img = restorer.enhance(
-    input_img,
+        input_img,
         has_aligned=False,
-    only_center_face=False,
+        only_center_face=False,
         paste_back=True,
         weight=0.5)
 
     restored_img=cv2.cvtColor(restored_img.astype(np.uint8), cv2.COLOR_RGB2BGR) 
-    return Image.fromarray(restored_img.astype(np.uint8)), txt, Image.fromarray(grid.astype(np.uint8))
+    Image.fromarray(restored_img.astype(np.uint8)).save(
+                            os.path.join("outputs/txt2img-samples/", "{:04d}".format(global_count) + "_upscale_seed_" + str(seed) + "_" + f"{base_count:05}.{img_format}"))
+    return Image.fromarray(restored_img.astype(np.uint8)), Image.fromarray(grid.astype(np.uint8)), txt
 
 
 demo = gr.Interface(
     fn=generate,
     inputs=[
         "text",
-        gr.Slider(1, 1000, value=50),
+        gr.Slider(1, 1000, value=45),
         gr.Slider(1, 100, step=1),
         gr.Slider(1, 100, step=1),
         gr.Slider(512, 1024, value=512, step=64),
         gr.Slider(512, 1024, value=512, step=64),
-        gr.Slider(0, 50, value=7.5, step=0.1),
-        1,#gr.Slider(0, 1, step=0.01),
-        0, #gr.Slider(1, 2, value=1, step=1),
-        "cuda", #gr.Text(value="cuda"),
+        gr.Slider(0, 50, value=10.5, step=0.1),
         "text",
-        "outputs/txt2img-samples", #gr.Text(value="outputs/txt2img-samples"),
-        'png', #gr.Radio(["png", "jpg"], value='png'),
         "checkbox",
         gr.Radio(["ddim", "plms","heun", "euler", "euler_a", "dpm2", "dpm2_a", "lms"], value="euler_a"),
     ],
