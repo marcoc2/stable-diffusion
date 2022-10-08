@@ -126,7 +126,7 @@ def generate(
     sample_path = os.path.join(outpath, "_".join(re.split(":| ", prompt)))[:150]
     os.makedirs(sample_path, exist_ok=True)
     base_count = len(os.listdir(sample_path))
-    global_count = len(os.listdir(outpath))
+    global_count = len(os.listdir("/content/outputs/"))
     
     # n_rows = opt.n_rows if opt.n_rows > 0 else batch_size
     assert prompt is not None
@@ -256,7 +256,7 @@ def generate(
 
     restorer = GFPGANer(
         model_path=model_path,
-        upscale=2,
+        upscale=1,
         arch=arch,
         channel_multiplier=channel_multiplier,
         bg_upsampler=bg_upsampler)
@@ -278,7 +278,7 @@ def generate(
 
     restored_img=cv2.cvtColor(restored_img.astype(np.uint8), cv2.COLOR_RGB2BGR) 
     Image.fromarray(restored_img.astype(np.uint8)).save(
-                            os.path.join("outputs/txt2img-samples/", "{:04d}".format(global_count) + "_upscale_seed_" + str(seed) + "_" + f"{base_count:05}.{img_format}"))
+                            os.path.join("/content/outputs/", "{:04d}".format(global_count) + f".{img_format}"))
     return Image.fromarray(restored_img.astype(np.uint8)), Image.fromarray(grid.astype(np.uint8)), txt
 
 
